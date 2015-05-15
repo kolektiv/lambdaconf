@@ -7,25 +7,25 @@ open Freya.Core
 
 let helloWorld =
     freya {
-        let body = "Hello World"B
+        let  text = "Hello World"B
         let! state = Freya.getState
 
         state.Environment.["owin.ResponseStatusCode"] <- 200
         state.Environment.["owin.ResponseReasonPhrase"] <- "Awesome"
-        state.Environment.["owin.ResponseBody"] :?> Stream |> fun x -> x.Write (body, 0, body.Length) }
+        state.Environment.["owin.ResponseBody"] :?> Stream |> fun x -> x.Write (text, 0, text.Length) }
 
 // Katana
 
 open Microsoft.Owin.Hosting
 
-type FreyaApplication () =
+type Exercise () =
     member __.Configuration () =
-        OwinAppFunc.ofFreya (helloWorld)
+        OwinAppFunc.ofFreya helloWorld
 
-// Main
+// Entry
 
 [<EntryPoint>]
-let main _ = 
-    let _ = WebApp.Start<FreyaApplication> ("http://localhost:8080")
+let run _ =
+    let _ = WebApp.Start<Exercise> ("http://localhost:8080")
     let _ = Console.ReadLine ()
     0
