@@ -19,9 +19,9 @@ open Freya.Router
 open Freya.Types.Http
 open Freya.Types.Uri.Template
 
-let messageWorld message =
+let messageName message name =
     freya {
-        let text = Encoding.UTF8.GetBytes (sprintf "%s World" message)
+        let text = Encoding.UTF8.GetBytes (sprintf "%s %s" message name)
 
         do! Freya.setLensPartial Response.statusCode 200
         do! Freya.setLensPartial Response.reasonPhrase "Awesome"
@@ -29,18 +29,20 @@ let messageWorld message =
 
         return! Freya.next }
 
-let helloWorld =
+let helloName =
     freya {
-        return! messageWorld "Hello" }
+        let! name = Freya.getLensPartial (Route.atom "name")
+        return! messageName "Hello" name.Value }
 
-let goodbyeWorld =
+let goodbyeName =
     freya {
-        return! messageWorld "Goodbye" }
+        let! name = Freya.getLensPartial (Route.atom "name")
+        return! messageName "Goodbye" name.Value }
 
-let converseWorld =
+let converseName =
     freyaRouter {
-        route All (UriTemplate.Parse "/hello") helloWorld
-        route All (UriTemplate.Parse "/goodbye") goodbyeWorld } |> FreyaRouter.toPipeline
+        route All (UriTemplate.Parse "/hello/{name}") helloName
+        route All (UriTemplate.Parse "/goodbye/{name}") goodbyeName } |> FreyaRouter.toPipeline
 
 // Katana
 
@@ -48,7 +50,7 @@ open Microsoft.Owin.Hosting
 
 type Exercise () =
     member __.Configuration () =
-        OwinAppFunc.ofFreya converseWorld
+        OwinAppFunc.ofFreya converseName
 
 // Entry
 

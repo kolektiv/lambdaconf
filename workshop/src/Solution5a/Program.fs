@@ -3,6 +3,23 @@ open System.Text
 
 // Freya
 
+(* Exercise
+
+   Refector the messageWorld function to messageName - taking an extra
+   parameter for who to message. Change the logic where needed!
+   
+   Refactor the helloWorld and goodbyeWorld functions to helloName and
+   goodbyeName, getting the name to use with the Route.atom lens.
+   
+   Refactor the converseWorld function to converseName, changing the paths
+   to require a {name} segment. *)
+
+(* Note
+
+   This is an alternative approach to working with Freya. If you prefer
+   monadic (sorry!) operator syntax to computation expression syntax,
+   you can get that by opening the Freya.Core.Operators module. *)
+
 open Freya.Core
 open Freya.Core.Operators
 open Freya.Router

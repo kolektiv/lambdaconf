@@ -14,7 +14,11 @@ open System.Threading.Tasks
 let helloWorld =
     Func<IDictionary<string, obj>, Task> (fun env ->
         Async.StartAsTask (async {
-            return () }) :> Task)
+            let text = "Hello World"B
+
+            env.["owin.ResponseStatusCode"] <- 200
+            env.["owin.ResponseReasonPhrase"] <- "Awesome"
+            env.["owin.ResponseBody"] :?> Stream |> fun x -> x.Write (text, 0, text.Length) }) :> Task)
 
 // Katana
 
@@ -31,11 +35,3 @@ let run _ =
     let _ = WebApp.Start<Exercise> ("http://localhost:8080")
     let _ = Console.ReadLine ()
     0
-
-(* Solution
-
-let body = "Hello World"B
-
-env.["owin.ResponseStatusCode"] <- 200
-env.["owin.ResponseReasonPhrase"] <- "Awesome"
-env.["owin.ResponseBody"] :?> Stream |> fun x -> x.Write (body, 0, body.Length) } *)

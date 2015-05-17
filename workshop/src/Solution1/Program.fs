@@ -12,7 +12,12 @@ open Freya.Core
 
 let helloWorld =
     freya {
-        return () }
+        let text = "Hello World"B
+        let! state = Freya.getState
+
+        state.Environment.["owin.ResponseStatusCode"] <- 200
+        state.Environment.["owin.ResponseReasonPhrase"] <- "Awesome"
+        state.Environment.["owin.ResponseBody"] :?> Stream |> fun x -> x.Write (text, 0, text.Length) }
 
 // Katana
 
@@ -29,3 +34,7 @@ let run _ =
     let _ = WebApp.Start<Exercise> ("http://localhost:8080")
     let _ = Console.ReadLine ()
     0
+
+(* Solution
+
+*)

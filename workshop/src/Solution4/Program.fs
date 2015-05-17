@@ -1,24 +1,22 @@
 ﻿open System
+open System.Text
 
 // Freya
 
 (* Exercise
 
-   Create a new function, goodbyeWorld, which responds with a suitable message
-   when called. Extend the router function converseWorld to map the path
-   "/goodbye" to the new goodbyeWorld function.
-
-   Note: helloWorld returns Freya.next now, meaning it can be used in
-   a pipeline. *)
+   Refactor the two message functions, helloWorld and goodbyeWorld to
+   call a more general "messageWorld" function. You may need to explicitly
+   encode the text for the body now - UTF8 is a good option. *)
 
 open Freya.Core
 open Freya.Router
 open Freya.Types.Http
 open Freya.Types.Uri.Template
 
-let helloWorld =
+let messageWorld message =
     freya {
-        let  text = "Hello World"B
+        let text = Encoding.UTF8.GetBytes (sprintf "%s World" message)
 
         do! Freya.setLensPartial Response.statusCode 200
         do! Freya.setLensPartial Response.reasonPhrase "Awesome"
@@ -26,9 +24,18 @@ let helloWorld =
 
         return! Freya.next }
 
+let helloWorld =
+    freya {
+        return! messageWorld "Hello" }
+
+let goodbyeWorld =
+    freya {
+        return! messageWorld "Goodbye" }
+
 let converseWorld =
     freyaRouter {
-        route All (UriTemplate.Parse "/hello") helloWorld } |> FreyaRouter.toPipeline
+        route All (UriTemplate.Parse "/hello") helloWorld
+        route All (UriTemplate.Parse "/goodbye") goodbyeWorld } |> FreyaRouter.toPipeline
 
 // Katana
 
