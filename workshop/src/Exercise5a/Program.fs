@@ -4,29 +4,29 @@ open System.Text
 // Freya
 
 open Freya.Core
+open Freya.Core.Operators
 open Freya.Router
 open Freya.Types.Http
 open Freya.Types.Uri.Template
 
 let messageName message name =
-    freya {
-        let  text = Encoding.UTF8.GetBytes (sprintf "%s %s" message name)
+        Freya.setLensPartial Response.statusCode 200
+     *> Freya.setLensPartial Response.reasonPhrase "Awesome"
+     *> Freya.mapLens Response.body (fun stream ->
+            let text = Encoding.UTF8.GetBytes (sprintf "%s %s" message name)
+            let _ = stream.Write (text, 0, text.Length);
+            
+            stream)
+     *> Freya.next
 
-        do! Freya.setLensPartial Response.statusCode 200
-        do! Freya.setLensPartial Response.reasonPhrase "Awesome"
-        do! Freya.mapLens Response.body (fun x -> x.Write (text, 0, text.Length); x)
-
-        return! Freya.next }
+let readName =
+    Option.get <!> Freya.getLensPartial (Route.atom "name")
 
 let helloName =
-    freya {
-        let! name = Freya.getLensPartial (Route.atom "name")
-        return! messageName "Hello" name.Value }
+    readName >>= messageName "Hello"
 
 let goodbyeName =
-    freya {
-        let! name = Freya.getLensPartial (Route.atom "name")
-        return! messageName "Goodbye" name.Value }
+    readName >>= messageName "Goodbye"
 
 let converseWorld =
     freyaRouter {
