@@ -1,4 +1,5 @@
 ﻿open System
+open System.Text
 
 // Domain
 
@@ -12,13 +13,37 @@ let todoStore =
 open Freya.Core
 open Freya.Machine
 open Freya.Machine.Extensions.Http
+open Freya.Machine.Extensions.Http.Cors
 open Freya.Machine.Router
 open Freya.Router
+open Freya.Types.Http
+open Freya.Types.Http.Cors
 open Freya.Types.Uri.Template
+
+let corsHeaders =
+    freya {
+        return [
+            "accept"
+            "content-type" ] }
+
+let corsOrigins =
+    freya {
+        return AccessControlAllowOriginRange.Any }
+
+let todosMethods =
+    freya {
+        return [
+            GET
+            OPTIONS ] }
 
 let todos =
     freyaMachine {
-        using http } |> FreyaMachine.toPipeline
+        using http
+        using httpCors
+        corsHeadersSupported corsHeaders
+        corsMethodsSupported todosMethods
+        corsOriginsSupported corsOrigins
+        methodsSupported todosMethods } |> FreyaMachine.toPipeline
 
 let todoBackend =
     freyaRouter {
