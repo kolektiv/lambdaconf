@@ -1,4 +1,6 @@
 ﻿open System
+open System.IO
+open System.Text
 
 // Domain
 
@@ -17,7 +19,40 @@ open Freya.Machine.Router
 open Freya.Router
 open Freya.Types.Http
 open Freya.Types.Http.Cors
+open Freya.Types.Language
 open Freya.Types.Uri.Template
+
+// -- Helpers
+
+open Chiron
+
+let inline read () =
+    freya {
+        let! body = Freya.getLens Request.body
+
+        use reader = new StreamReader (body)
+        let data = reader.ReadToEnd ()
+        
+        match Json.tryParse data with
+        | Choice1Of2 json ->
+            match Json.tryDeserialize json with
+            | Choice1Of2 obj -> return Some obj
+            | _ -> return None
+        | _ ->
+            return None }
+
+let inline write obj =
+    freya {
+        let json = Json.serialize obj
+        let text = Json.format json
+
+        return {
+            Data = Encoding.UTF8.GetBytes text
+            Description =
+                { Charset = Some Charset.Utf8
+                  Encodings = None
+                  MediaType = Some MediaType.Json
+                  Languages = Some [ LanguageTag.Parse "en" ] } } }
 
 // -- Common
 
@@ -46,17 +81,35 @@ let common =
 
 // -- Todos
 
+let todoAdd =
+    freya {
+        let! todoCreate = read ()
+        return! Freya.fromAsync todoStore.Add todoCreate.Value } |> Freya.memo
+
+let todoAddDo =
+    freya {
+        let! _ = todoAdd
+        return () }
+
+let todoAddHandle _ =
+    freya {
+        let! todo = todoAdd
+        return! write todo }
+
 let todosMethods =
     freya {
         return [
             GET
-            OPTIONS ] }
+            OPTIONS
+            POST ] }
 
 let todos =
     freyaMachine {
         including common
         corsMethodsSupported todosMethods
-        methodsSupported todosMethods } |> FreyaMachine.toPipeline
+        methodsSupported todosMethods
+        doPost todoAddDo
+        handleCreated todoAddHandle } |> FreyaMachine.toPipeline
 
 let todoBackend =
     freyaRouter {
