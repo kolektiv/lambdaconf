@@ -81,29 +81,38 @@ let common =
 
 // -- Todos
 
-let todoAdd =
+let todosAdd =
     freya {
         let! todoCreate = read ()
         return! Freya.fromAsync todoStore.Add todoCreate.Value } |> Freya.memo
 
-let todoAddDo =
+let todosAddDo =
     freya {
-        let! _ = todoAdd
+        let! _ = todosAdd
         return () }
 
-let todoAddHandle _ =
+let todosAddHandle _ =
     freya {
-        let! todo = todoAdd
+        let! todo = todosAdd
         return! write todo }
 
-let todoClear =
+let todosClear =
     freya {
         return! Freya.fromAsync todoStore.Clear () } |> Freya.memo
 
-let todoClearDo =
+let todosClearDo =
     freya {
-        let! _ = todoClear
+        let! _ = todosClear
         return () }
+
+let todosList =
+    freya {
+        return! Freya.fromAsync todoStore.List () } |> Freya.memo
+
+let todosListHandle _ =
+    freya {
+        let! todos = todosList
+        return! write todos }
 
 let todosMethods =
     freya {
@@ -118,13 +127,31 @@ let todos =
         including common
         corsMethodsSupported todosMethods
         methodsSupported todosMethods
-        doDelete todoClearDo
-        doPost todoAddDo
-        handleCreated todoAddHandle } |> FreyaMachine.toPipeline
+        doDelete todosClearDo
+        doPost todosAddDo
+        handleCreated todosAddHandle
+        handleOk todosListHandle } |> FreyaMachine.toPipeline
+
+// -- Todo
+
+let todoMethods =
+    freya {
+        return [
+            GET
+            OPTIONS ] }
+
+let todo =
+    freyaMachine {
+        including common
+        corsMethodsSupported todoMethods
+        methodsSupported todoMethods } |> FreyaMachine.toPipeline
+
+// -- Todo Backend
 
 let todoBackend =
     freyaRouter {
-        resource (UriTemplate.Parse "/") todos } |> FreyaRouter.toPipeline
+        resource (UriTemplate.Parse "/") todos
+        resource (UriTemplate.Parse "/{id}") todo } |> FreyaRouter.toPipeline
 
 // Katana
 

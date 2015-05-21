@@ -81,19 +81,19 @@ let common =
 
 // -- Todos
 
-let todoAdd =
+let todosAdd =
     freya {
         let! todoCreate = read ()
         return! Freya.fromAsync todoStore.Add todoCreate.Value } |> Freya.memo
 
-let todoAddDo =
+let todosAddDo =
     freya {
-        let! _ = todoAdd
+        let! _ = todosAdd
         return () }
 
-let todoAddHandle _ =
+let todosAddHandle _ =
     freya {
-        let! todo = todoAdd
+        let! todo = todosAdd
         return! write todo }
 
 let todosMethods =
@@ -108,8 +108,10 @@ let todos =
         including common
         corsMethodsSupported todosMethods
         methodsSupported todosMethods
-        doPost todoAddDo
-        handleCreated todoAddHandle } |> FreyaMachine.toPipeline
+        doPost todosAddDo
+        handleCreated todosAddHandle } |> FreyaMachine.toPipeline
+
+// -- Todo Backend
 
 let todoBackend =
     freyaRouter {
